@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Second</title>
+</head>
+<body>
+
+        <style>
+                #outgoing {
+                  width: 600px;
+                  word-wrap: break-word;
+                }
+              </style> 
+              <form>
+                <textarea id="incoming"></textarea>
+                <button id="connectButton" type="submit">submit</button>
+              </form>
+
+
+              <input  id="messageText" type="text" />
+              <button id="sendButton" > Send</button>
+
+
+              <button id="eventButton" > Event Button</button>
+               <pre id="outgoing"></pre>
+
+               <script src="/socket.io/socket.io.js"></script>
+              <script src="node_modules/simple-peer/simplepeer.min.js"></script>
+    <script>
+ let socket = io();
+
+
+var p = new SimplePeer({ initiator: false, trickle: true , 
+
+config : {iceServers: [ 
+   {
+  urls:"stun: stun.rixtelecom.se",
+  } ,
+  {
+  urls:"stun: stun.schlund.de",
+  } ,
+  {
+  urls:"stun: stunserver.org",
+  } ,
+  {
+  urls:"stun: stun.softjoys.com",
+  } ,
+  {
+  urls:"stun: stun.voipstunt.com",
+  } ,
+
+  ]} })
+ 
+p.on('error', function (err) { console.log('error', err) })
+ 
+
+ 
+document.querySelector('form').addEventListener('submit', function (ev) {
+  ev.preventDefault()
+  p.signal(JSON.parse(document.querySelector('#incoming').value))
+})
+ 
+p.on('connect', function () {
+  console.log('CONNECT')
+  p.send('whatever' + Math.random())
+})
+ 
+p.on('data', function (data) {
+  console.log('data: ' + data)
+  document.body.insertAdjacentHTML('beforeEnd', `<p> ${data} </p>`);
+})
+
+
+document.querySelector('#sendButton').addEventListener('click', function() {
+  p.send( document.querySelector('#messageText').value);
+  
+});
+
+
+// p.on('myMessage', function(info) {
+     
+// });
+
+
+p.on('hello', function(text) {
+   document.body.insertAdjacentHTML('hello', `<p> ${text} </p>`);
+});
+
+p.on('anotherMessage', function() {
+console.log("РАБОТАЕЕЕЕЕЕЕТ");
+ 
+ 
+  //  console.log("Пришли данные");
+});
+
+//нажатие на кнопку генерации события
+document.querySelector('#eventButton').addEventListener('click', function() { 
+  
+
+
+
+
+p.emit('anotherMessage');
+});
+
+
+
+socket.emit('nonInitiator');
+
+socket.on('$initiatorConnectionInfo', function(info) {
+  console.log(info);
+   document.querySelector('#incoming').textContent = info;
+   document.querySelector('#connectButton').click();
+
+   p.on('signal', function (data) {
+  console.log('SIGNAL', JSON.stringify(data))
+  document.querySelector('#outgoing').textContent = JSON.stringify(data);
+  socket.emit('nonInitiatorAnswer', data);
+})
+
+})
+
+
+
+
+
+         
+    </script>
+
+   
+    
+</body>
+</html>
